@@ -43,7 +43,7 @@ public class LoggingTag {
 		} else {
 			Logging.outMessage(tag, message, outToConsole);
 		}
-		Logging.appendMessageInLoggingFormat(tagLog, tag, message, useTimeStamp);
+		this.tagLog = Logging.appendMessageInLoggingFormat(tagLog, tag, message, useTimeStamp);
 	}
 	
 	public boolean shouldOutputToOwnLogOnClose() {

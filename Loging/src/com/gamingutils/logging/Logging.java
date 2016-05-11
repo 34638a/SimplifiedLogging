@@ -11,13 +11,15 @@ import java.util.List;
 
 public class Logging {
 	
+	private static final String filePath = "./log/";
+	
 	private static String LOG_DATA = "";
 	private static boolean APPEND_TIMESTAMP = false;
 	private static List<LoggingTag> tags = new ArrayList<LoggingTag>();
 	//0 = directFileStructure
 	//1 = perTagFileStructure
 	//2 = perSaveDateFileStructure
-	private static int fileStructure = 0;
+	private static int fileStructure = 2;
 	
 	public static void enableLogger() {
 		registerLogger(true);
@@ -27,15 +29,13 @@ public class Logging {
 	}
 	
 	private static void registerLogger(boolean timestamp) {
-		
 		APPEND_TIMESTAMP = timestamp;
 		Runtime.getRuntime().addShutdownHook(new Thread(){
-			@Override
 			public void run() {
-				writeOutLogToFile(LOG_DATA, "./logs" + getFileStructure("logMain") + "/logMain", ".txt", true);
+				writeOutLogToFile(LOG_DATA, filePath + getFileStructure("logMain") + "logMain", ".txt", true);
 				for (LoggingTag tag : tags) {
 					if (tag.shouldOutputToOwnLogOnClose()) {
-						writeOutLogToFile(tag.getLog(), "./logs" + getFileStructure(tag.getOutputName()) + tag.getOutputName(), ".txt", true);
+						writeOutLogToFile(tag.getLog(), filePath + getFileStructure(tag.getOutputName()) + tag.getOutputName(), ".txt", true);
 					}
 				}
 			}
@@ -47,7 +47,7 @@ public class Logging {
 		if (fileStructure == 0) {
 			structure = "";
 		} else if (fileStructure == 1) {
-			structure = "/pathName";
+			structure = "/" + pathName;
 		} else if (fileStructure == 2) {
 			structure = "/" + getTimeStamp(true);
 			structure = structure.substring(0, structure.length() - 3);
@@ -63,20 +63,20 @@ public class Logging {
 	}
 	
 	public static void outMessage(String tag, String message, boolean outToConsole) {
-		appendMessageInLoggingFormat(LOG_DATA, tag, message, APPEND_TIMESTAMP);
+		LOG_DATA = appendMessageInLoggingFormat(LOG_DATA, tag, message, APPEND_TIMESTAMP);
 		if (outToConsole) {
 			System.out.println(getTimeStamp(APPEND_TIMESTAMP) + " | Message: " + message);
 		}
 	}
 	public static void outError(String tag, String message, boolean outToConsole) {
-		appendMessageInLoggingFormat(LOG_DATA, tag, message, APPEND_TIMESTAMP);
+		LOG_DATA = appendMessageInLoggingFormat(LOG_DATA, tag, message, APPEND_TIMESTAMP);
 		if (outToConsole) {
 			System.err.println(getTimeStamp(APPEND_TIMESTAMP) + " | Message: " + message);
 		}
 	}
 	
-	public static void appendMessageInLoggingFormat(String log, String tag, String message, boolean addTimeStamp) {
-		log += "|" + tag + getTimeStamp(addTimeStamp) + message;
+	public static String appendMessageInLoggingFormat(String log, String tag, String message, boolean addTimeStamp) {
+		return log + "|" + tag + getTimeStamp(addTimeStamp) + message;
 	}
 	
 	private static String getTimeStamp(boolean shouldTimeStamp) {
@@ -89,10 +89,10 @@ public class Logging {
 	}
 	
 	public static void writeOutLogToFile(String logFile, String fileNamePath, String extension, boolean APPEND_TIMESTAMP) {
-		File f = new File(fileNamePath + getTimeStamp(APPEND_TIMESTAMP) + extension);
-		if (!f.exists()) {
-			f.mkdirs();
-		}
+		String time = getTimeStamp(true);
+		time = time.substring(0, time.length() - 3);
+		File f = new File(fileNamePath + time + extension);
+		f.getParentFile().mkdirs();
 		BufferedWriter w = null;
 		try {
 			w = new BufferedWriter(new FileWriter(f));
