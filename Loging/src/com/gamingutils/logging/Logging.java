@@ -11,7 +11,7 @@ import java.util.List;
 
 public class Logging {
 	
-	private static final String filePath = "./log/";
+	private static final String filePath = "./log";
 	
 	private static String LOG_DATA = "";
 	private static boolean APPEND_TIMESTAMP = false;
@@ -19,21 +19,31 @@ public class Logging {
 	//0 = directFileStructure
 	//1 = perTagFileStructure
 	//2 = perSaveDateFileStructure
-	private static int fileStructure = 2;
+	//3 = perSaveDateFileStructure + perTagFileStructure
+	private static int FILE_STRUCTURE = 0;
 	
 	public static void enableLogger() {
-		registerLogger(true);
+		registerLogger(0, true);
 	}
 	public static void enableLogger(boolean APPEND_TIMESTAMP) {
-		registerLogger(APPEND_TIMESTAMP);
+		registerLogger(0, APPEND_TIMESTAMP);
+	}
+	public static void enableLogger(int FILE_STRUCTURE) {
+		registerLogger(FILE_STRUCTURE, true);
+	}
+	public static void enableLogger(int FILE_STRUCTURE, boolean APPEND_TIMESTAMP) {
+		registerLogger(FILE_STRUCTURE, APPEND_TIMESTAMP);
 	}
 	
-	private static void registerLogger(boolean timestamp) {
+	private static void registerLogger(int fileStructure, boolean timestamp) {
 		APPEND_TIMESTAMP = timestamp;
+		FILE_STRUCTURE = fileStructure;
 		Runtime.getRuntime().addShutdownHook(new Thread(){
 			public void run() {
 				writeOutLogToFile(LOG_DATA, filePath + getFileStructure("logMain") + "logMain", ".txt", true);
+				//System.out.println(tags.size());
 				for (LoggingTag tag : tags) {
+					
 					if (tag.shouldOutputToOwnLogOnClose()) {
 						writeOutLogToFile(tag.getLog(), filePath + getFileStructure(tag.getOutputName()) + tag.getOutputName(), ".txt", true);
 					}
@@ -44,13 +54,18 @@ public class Logging {
 	
 	private static String getFileStructure(String pathName) {
 		String structure = "";
-		if (fileStructure == 0) {
-			structure = "";
-		} else if (fileStructure == 1) {
-			structure = "/" + pathName;
-		} else if (fileStructure == 2) {
+		if (FILE_STRUCTURE == 0) {
+			structure = "/";
+		} else if (FILE_STRUCTURE == 1) {
+			structure = "/" + pathName + "/";
+		} else if (FILE_STRUCTURE == 2) {
 			structure = "/" + getTimeStamp(true);
 			structure = structure.substring(0, structure.length() - 3);
+			structure = structure.substring(0,5) + "/" + structure.substring(5,7) + "/" + structure.substring(7,9) + "/";
+		} else if (FILE_STRUCTURE == 3) {
+			structure = "/" + getTimeStamp(true);
+			structure = structure.substring(0, structure.length() - 3);
+			structure = structure.substring(0,5) + "/" + structure.substring(5,7) + "/" + structure.substring(7,9) + "/" + pathName + "/";
 		}
 		return structure;
 	}
@@ -91,6 +106,7 @@ public class Logging {
 	public static void writeOutLogToFile(String logFile, String fileNamePath, String extension, boolean APPEND_TIMESTAMP) {
 		String time = getTimeStamp(true);
 		time = time.substring(0, time.length() - 3);
+		//System.out.println(fileNamePath + time + extension);
 		File f = new File(fileNamePath + time + extension);
 		f.getParentFile().mkdirs();
 		BufferedWriter w = null;

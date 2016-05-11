@@ -33,8 +33,10 @@ public class LoggingTag {
 		this.outToConsole = outToConsole;
 		this.outputName = outputName;
 		if (outputName != null) {
+			//System.out.println(outputName);
 			this.outputToOwnLogOnClose = true;
 		}
+		Logging.addTag(this);
 	}
 	
 	public void writeOutTagData(String message) {
